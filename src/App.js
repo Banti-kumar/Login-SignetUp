@@ -1,24 +1,47 @@
-import logo from './logo.svg';
-import './App.css';
+import AuthMiddleware from "./middleware/AuthMiddleware";
+import Fallback from "./components/Fallback";
+import { Suspense, lazy } from "react";
+import { Navigate, Route, Routes } from "react-router";
+
+const Login = lazy(() => import("./page/login"));
+const Dashboard = lazy(() => import("./page/dashboard"));
+
+const routes = {
+  public: [
+    {
+      path: "/user/login",
+      element: <Login />,
+    },
+  ],
+
+  private: [
+    {
+      path: "/dashboard",
+      element: <Dashboard />,
+    },
+  ],
+};
+
+const renderRoutes = (routes) =>
+  routes.map(({ path, element }) => (
+    <Route key={path} path={path} element={element} />
+  ));
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Suspense fallback={<Fallback />}>
+      <Routes>
+        <Route path="/" element={<Navigate to="/user/login" replace />} />
+
+        <Route element={<AuthMiddleware type="public" />}>
+          {renderRoutes(routes.public)}
+        </Route>
+
+        <Route element={<AuthMiddleware type="private" />}>
+          {renderRoutes(routes.private)}
+        </Route>
+      </Routes>
+    </Suspense>
   );
 }
 
